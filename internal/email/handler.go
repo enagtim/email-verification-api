@@ -1,12 +1,9 @@
 package email
 
 import (
+	"api/email-verification/pkg/verfication"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"net/smtp"
-
-	"github.com/jordan-wright/email"
 )
 
 type EmailHandler struct {
@@ -35,7 +32,7 @@ func (handler *EmailHandler) Create() http.HandlerFunc {
 			http.Error(w, "ERROR SAVE DATABASE", http.StatusInternalServerError)
 			return
 		}
-		err = sendVerificationEmail(email.Email, email.Hash)
+		err = verfication.SendEmailVerification(email.Email, email.Hash)
 		if err != nil {
 			http.Error(w, "ERROR SENDING EMAIL", http.StatusInternalServerError)
 			return
@@ -58,15 +55,4 @@ func (handler *EmailHandler) Verify() http.HandlerFunc {
 		}
 		w.WriteHeader(200)
 	}
-}
-func sendVerificationEmail(to, hash string) error {
-	e := email.NewEmail()
-	e.From = "Your Service <test@gmail.com>"
-	e.To = []string{to}
-	e.Subject = "Email Verification"
-	e.Text = []byte(fmt.Sprintf("Click the link to verify: http://localhost:8000/email/verify/%s", hash))
-	e.HTML = []byte(fmt.Sprintf("<h1>Click the link to verify: <a href='http://localhost:8000/email/verify/%s'>Verify</a></h1>", hash))
-
-	auth := smtp.PlainAuth("", "test@gmail.com", "1234", "smtp.gmail.com")
-	return e.Send("smtp.gmail.com:587", auth)
 }
