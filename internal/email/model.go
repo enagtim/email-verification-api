@@ -1,6 +1,9 @@
 package email
 
-import "math/rand"
+import (
+	"crypto/rand"
+	"encoding/base64"
+)
 
 type Email struct {
 	Email string `json:"email"`
@@ -8,18 +11,20 @@ type Email struct {
 }
 
 func NewEmail(email string) *Email {
+	hash, err := GenerateVerificationHash()
+	if err != nil {
+		return nil
+	}
 	return &Email{
 		Email: email,
-		Hash:  RandStringRunes(6),
+		Hash:  hash,
 	}
 }
-
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-func RandStringRunes(n int) string {
-	b := make([]rune, n)
-	for index := range b {
-		b[index] = letterRunes[rand.Intn(len(letterRunes))]
+func GenerateVerificationHash() (string, error) {
+	bytes := make([]byte, 32)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
 	}
-	return string(b)
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }
